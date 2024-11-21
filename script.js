@@ -3,9 +3,69 @@ const search = document.getElementById("search"),
   random = document.getElementById("random"),
   mealsEl = document.getElementById("meals"),
   resultHeading = document.getElementById("result-heading"),
-  single_mealEl = document.getElementById("single-meal");
+  single_mealEl = document.getElementById("single-meal"),
+  categoriesEl = document.getElementById("categories"),
+  categoriestHeading = document.getElementById("categories-heading");
 
-// Searc meal and fetch from API
+// Fetch all meal categories from API
+function displayCategories() {
+  fetch(`https://www.themealdb.com/api/json/v1/1/categories.php`)
+    .then((res) => res.json())
+    .then((data) => {
+      categoriestHeading.innerHTML = `<h3>Meals categories</h3>`;
+      //console.log(data);
+
+      if (data.categories === null) {
+        categoriesEl.innerHTML = "";
+      } else {
+        categoriesEl.innerHTML = data.categories
+          .map(
+            (category) => `
+          <div class="category" data-categoryName="${category.strCategory}">
+            <img src="${category.strCategoryThumb}" alt="${category.strCategory}" />
+            <div class="category-info" data-categoryID="${category.idCategory}">
+              <h3>${category.strCategory}</h3>
+            </div>
+          </div>
+        `
+          )
+          .join("");
+      }
+    });
+}
+
+// Fetch meals from API by category
+function getMealsByCategory(categoryName) {
+  // Clear single meal
+  single_mealEl.innerHTML = "";
+
+  fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?c=${categoryName}`)
+    .then((res) => res.json())
+    .then((data) => {
+      console.log(data);
+
+      resultHeading.innerHTML = `<h2>Results for category '${categoryName}'</h2>`;
+
+      if (data.meals === null) {
+        resultHeading.innerHTML = `<p>There are no search results. Try again!</p>`;
+      } else {
+        mealsEl.innerHTML = data.meals
+          .map(
+            (meal) => `
+              <div class="meal">
+                  <img src="${meal.strMealThumb}" alt="${meal.strMeal}" />
+                  <div class="meal-info" data-mealID="${meal.idMeal}" >
+                      <h3>${meal.strMeal}</h3>
+                  </div>
+              </div>
+          `
+          )
+          .join("");
+      }
+    });
+}
+
+// Search meal and fetch from API
 function searchMeal(e) {
   e.preventDefault();
 
@@ -120,7 +180,24 @@ mealsEl.addEventListener("click", (e) => {
   });
 
   if (mealInfo) {
-    const mealID = mealInfo.getAttribute("data-mealid");
+    const mealID = mealInfo.getAttribute("data-mealID");
     getMealById(mealID);
   }
 });
+
+categoriesEl.addEventListener("click", (e) => {
+  const category = e.composedPath().find((item) => {
+    if (item.classList) {
+      return item.classList.contains("category");
+    } else {
+      return false;
+    }
+  });
+
+  if (category) {
+    const categoryName = category.getAttribute("data-categoryName");
+    getMealsByCategory(categoryName);
+  }
+});
+
+displayCategories();
