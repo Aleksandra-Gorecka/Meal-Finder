@@ -5,14 +5,15 @@ const search = document.getElementById("search"),
   resultHeading = document.getElementById("result-heading"),
   single_mealEl = document.getElementById("single-meal"),
   categoriesEl = document.getElementById("categories"),
-  categoriestHeading = document.getElementById("categories-heading");
+  categoriestHeading = document.getElementById("categories-heading"),
+  lettersEl = document.getElementById("letters");
 
 // Fetch all meal categories from API
 function displayCategories() {
   fetch(`https://www.themealdb.com/api/json/v1/1/categories.php`)
     .then((res) => res.json())
     .then((data) => {
-      categoriestHeading.innerHTML = `<h3>Meals categories</h3>`;
+      categoriestHeading.innerHTML = `<h3>Browse meals by category</h3>`;
       //console.log(data);
 
       if (data.categories === null) {
@@ -42,12 +43,42 @@ function getMealsByCategory(categoryName) {
   fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?c=${categoryName}`)
     .then((res) => res.json())
     .then((data) => {
-      console.log(data);
+      //console.log(data);
 
       resultHeading.innerHTML = `<h2>Results for category '${categoryName}'</h2>`;
 
       if (data.meals === null) {
         resultHeading.innerHTML = `<p>There are no search results. Try again!</p>`;
+      } else {
+        mealsEl.innerHTML = data.meals
+          .map(
+            (meal) => `
+              <div class="meal">
+                  <img src="${meal.strMealThumb}" alt="${meal.strMeal}" />
+                  <div class="meal-info" data-mealID="${meal.idMeal}" >
+                      <h3>${meal.strMeal}</h3>
+                  </div>
+              </div>
+          `
+          )
+          .join("");
+      }
+    });
+}
+
+// Fetch meals from API by letter
+function getMealsbyLetter(singleLetter) {
+  // Clear single meal
+  single_mealEl.innerHTML = "";
+
+  fetch(`https://www.themealdb.com/api/json/v1/1/search.php?f=${singleLetter}`)
+    .then((res) => res.json())
+    .then((data) => {
+      resultHeading.innerHTML = `<h2>Results for letter '${singleLetter.toUpperCase()}'</h2>`;
+
+      if (data.meals === null) {
+        resultHeading.innerHTML = `<p>There are no search results. Try again!</p>`;
+        mealsEl.innerHTML = "";
       } else {
         mealsEl.innerHTML = data.meals
           .map(
@@ -85,6 +116,7 @@ function searchMeal(e) {
 
         if (data.meals === null) {
           resultHeading.innerHTML = `<p>There are no search results. Try again!</p>`;
+          mealsEl.innerHTML = "";
         } else {
           mealsEl.innerHTML = data.meals
             .map(
@@ -197,6 +229,21 @@ categoriesEl.addEventListener("click", (e) => {
   if (category) {
     const categoryName = category.getAttribute("data-categoryName");
     getMealsByCategory(categoryName);
+  }
+});
+
+lettersEl.addEventListener("click", (e) => {
+  const letter = e.composedPath().find((item) => {
+    if (item.classList) {
+      return item.classList.contains("letter");
+    } else {
+      return false;
+    }
+  });
+
+  if (letter) {
+    singleLetter = letter.innerText.toLowerCase();
+    getMealsbyLetter(singleLetter);
   }
 });
 
